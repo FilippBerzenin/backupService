@@ -1,21 +1,13 @@
-package com.berzenin.backup.server.server;
+package com.berzenin.backup.server;
 
-import javax.swing.JFrame;
+import java.nio.file.Paths;
 
-/**
- * Hello world!
- *
- */
 public class App 
 {
+	private int port;
     public static void main(String[] args) throws Exception {
-        if (args.length != 1) {
-            System.err.println("Pass the server IP as the sole command line argument");
-            return;
-        }
-        Client client = new Client(args[0]);
-        client.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        client.frame.setVisible(true);
-        client.run();
+    	App app = new App ();
+    	app.port = 3345;
+    	Server server = new Server(app.port);
     }
 }
