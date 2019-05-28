@@ -91,7 +91,7 @@ public class Client {
 //        );
 //    }
 
-	public void run() throws IOException {
+	public void run() throws IOException, InterruptedException {
 		try (var socket = new Socket(serverAddress, port))
 				 {
 			oos = new DataOutputStream(socket.getOutputStream());
@@ -99,6 +99,11 @@ public class Client {
 //			in = new Scanner(socket.getInputStream());
 //			out = new PrintWriter(socket.getOutputStream(), true);
 			swopFirstInformationWithServer();
+			while(true) {
+				oos.writeUTF(new FileChangerListener(workingDirectoryPath.toString()).woice());
+				oos.flush();
+				Thread.sleep(500);
+			}
 		} catch (ConnectException e) {
 			log.warning("Something with the connection, the server may not be turned on");
 			System.exit(0);
