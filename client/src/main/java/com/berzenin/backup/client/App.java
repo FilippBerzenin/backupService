@@ -14,7 +14,7 @@ public class App {
 		if (args.length != 3) {
 			System.err.println("Pass arguments from command line...");
 			app.serverIp = "localhost";
-			app.workingDirectoryPath = Paths.get("c:\\client\\dir12\\");
+			app.workingDirectoryPath = Paths.get("c:\\client\\dir2\\");
 			app.port = 3345;
 		} else {
 			app.workingDirectoryPath = Paths.get(args[0]);

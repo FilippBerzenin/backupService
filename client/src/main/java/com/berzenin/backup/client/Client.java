@@ -99,10 +99,11 @@ public class Client {
 //			in = new Scanner(socket.getInputStream());
 //			out = new PrintWriter(socket.getOutputStream(), true);
 			swopFirstInformationWithServer();
+			FileChangerListener fileChangerListener = new FileChangerListener(workingDirectoryPath, oos, ois);
+			
 			while(true) {
-				oos.writeUTF(new FileChangerListener(workingDirectoryPath.toString()).woice());
-				oos.flush();
-				Thread.sleep(500);
+				fileChangerListener.requestForCheckChangesFromDirectory();
+				Thread.sleep(50);
 			}
 		} catch (ConnectException e) {
 			log.warning("Something with the connection, the server may not be turned on");

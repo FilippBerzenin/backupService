@@ -5,6 +5,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardWatchEventKinds;
@@ -28,37 +29,41 @@ public class FileChangerListener {
 //	}
 	
 	private WatchService watchService;
-	private Path path;
-	private String backupDir;
-	private Socket socket;
+//	private Path path;
+//	private String backupDir;
+//	private Socket socket;
 	private ClientAction clientAction;
-	private int port;
-	private String serverName;
+//	private int port;
+//	private String serverName;
 	private DataOutputStream oos;
 	private DataInputStream ois;
-	private String dir;
-	private String clientName;
+//	private String dir;
+//	private String clientName;
+	private Path workingDirectoryPath;
 	
-	FileChangerListener(String backupDir, int port, String serverName, String clientName) {
-		this.port = port;
-		this.backupDir = backupDir;
-		this.serverName = serverName;
-		this.clientName = clientName;
-		dir=backupDir.substring(backupDir.lastIndexOf('\\'))+"\\";
-		try {
-			requestForCheckChangesFromDirectory ();	
-			log.info("Client connected to socket");
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+	FileChangerListener(Path workingDirectoryPath, DataOutputStream oos, DataInputStream ois) {
+		this.workingDirectoryPath = workingDirectoryPath;
+		this.oos = oos;
+		this.ois = ois;
+//		this.port = port;
+//		this.backupDir = backupDir;
+//		this.serverName = serverName;
+//		this.clientName = clientName;
+//		dir=backupDir.substring(backupDir.lastIndexOf('\\'))+"\\";
+//		try {
+//			requestForCheckChangesFromDirectory ();	
+////			log.info("Client connected to socket");
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
 	}		
 
 	public void requestForCheckChangesFromDirectory () {
 		try {
 			watchService = FileSystems.getDefault().newWatchService();
-			path = Paths.get(backupDir);
-			log.info("Set working directory: "+path);
-			path.register(watchService,  
+//			path = Paths.get(backupDir);
+			log.info("Set working directory: "+workingDirectoryPath);
+			workingDirectoryPath.register(watchService,  
 					StandardWatchEventKinds.ENTRY_CREATE, 
 		              StandardWatchEventKinds.ENTRY_DELETE, 
 		                StandardWatchEventKinds.ENTRY_MODIFY);
@@ -74,7 +79,8 @@ public class FileChangerListener {
 			    	log.info(
 			          "Event kind:" + event.kind() 
 			            + ". File affected: " + event.context() + ".");
-			    	eventExecutor(event.kind().toString(), event.context().toString());
+			    	Path pathForFile = Paths.get(workingDirectoryPath.toString(), event.context().toString());
+			    	eventExecutor(event.kind().toString(), pathForFile);
 			    }
 			    key.reset();
 			}
@@ -84,26 +90,26 @@ public class FileChangerListener {
 		}
 	}
 	
-	public void eventExecutor(String whatHappened, String fileName) throws IOException {
-		socket = new Socket(serverName, port);
-		try {
-			oos = new DataOutputStream(socket.getOutputStream());
-			ois = new DataInputStream(socket.getInputStream());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		String path = backupDir + '\\';
+	public void eventExecutor(String whatHappened, Path file) throws IOException {
+//		socket = new Socket(serverName, port);
+//		try {
+//			oos = new DataOutputStream(socket.getOutputStream());
+//			ois = new DataInputStream(socket.getInputStream());
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
+//		String path = backupDir + '\\';
 		switch (whatHappened) {
 		case "ENTRY_CREATE":
-			clientAction.sendFile(clientName+dir, path ,fileName, oos);
+			clientAction.sendFile(file, oos, ois);
 			log.info("ENTRY_CREATE");
 			break;
 		case "ENTRY_MODIFY":
-			clientAction.sendFile(clientName+dir, path ,fileName, oos);
+			clientAction.sendFile(file, oos, ois);
 			log.info("ENTRY_MODIFY");
 			break;
 		case "ENTRY_DELETE":
-			clientAction.deleteFile(clientName+dir, path ,fileName, oos);
+//			clientAction.deleteFile(fileName, oos);
 			log.info("ENTRY_DELETE");
 			break;
 		}
