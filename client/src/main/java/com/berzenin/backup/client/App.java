@@ -22,8 +22,6 @@ public class App {
 			app.port = Integer.parseInt(args[2]);
 		}
 		app.client = new Client(app.workingDirectoryPath, app.serverIp, app.port);
-//        client.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-//        client.frame.setVisible(true);
 		app.client.run();
 	}
 }

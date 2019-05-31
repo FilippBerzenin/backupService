@@ -26,4 +26,11 @@ public class ServerActionTest {
     					clientAMchineName, 
     					server));
 	}
+	
+	@Test
+	void sendInformationAboutWorkDirectoryStateTest () throws IOException {
+		Path directory = Paths.get("C:\\server\\Home\\client\\dir2");
+		ServerAction.getInformationAboutWorkDirectoryState(directory);
+		assertEquals(true, true);
+	}
 }

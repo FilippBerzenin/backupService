@@ -1,11 +1,9 @@
 package com.berzenin.backup.client;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.Socket;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.nio.file.FileSystems;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardWatchEventKinds;
@@ -18,50 +16,21 @@ import lombok.extern.java.Log;
 @Log
 public class FileChangerListener {
 	
-//	private String args;
-//	
-//	FileChangerListener (String args) {
-//		this.args=args;
-//	}
-//	
-//	public synchronized String woice () {
-//		return args;
-//	}
-	
 	private WatchService watchService;
-//	private Path path;
-//	private String backupDir;
-//	private Socket socket;
 	private ClientAction clientAction;
-//	private int port;
-//	private String serverName;
-	private DataOutputStream oos;
-	private DataInputStream ois;
-//	private String dir;
-//	private String clientName;
+	private ObjectOutputStream oos;
+	private ObjectInputStream ois;
 	private Path workingDirectoryPath;
 	
-	FileChangerListener(Path workingDirectoryPath, DataOutputStream oos, DataInputStream ois) {
+	FileChangerListener(Path workingDirectoryPath, ObjectOutputStream oos, ObjectInputStream ois) {
 		this.workingDirectoryPath = workingDirectoryPath;
 		this.oos = oos;
 		this.ois = ois;
-//		this.port = port;
-//		this.backupDir = backupDir;
-//		this.serverName = serverName;
-//		this.clientName = clientName;
-//		dir=backupDir.substring(backupDir.lastIndexOf('\\'))+"\\";
-//		try {
-//			requestForCheckChangesFromDirectory ();	
-////			log.info("Client connected to socket");
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//		}
 	}		
 
 	public void requestForCheckChangesFromDirectory () {
 		try {
 			watchService = FileSystems.getDefault().newWatchService();
-//			path = Paths.get(backupDir);
 			log.info("Set working directory: "+workingDirectoryPath);
 			workingDirectoryPath.register(watchService,  
 					StandardWatchEventKinds.ENTRY_CREATE, 
@@ -90,15 +59,8 @@ public class FileChangerListener {
 		}
 	}
 	
+	@SuppressWarnings("static-access")
 	public void eventExecutor(String whatHappened, Path file) throws IOException {
-//		socket = new Socket(serverName, port);
-//		try {
-//			oos = new DataOutputStream(socket.getOutputStream());
-//			ois = new DataInputStream(socket.getInputStream());
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
-//		String path = backupDir + '\\';
 		switch (whatHappened) {
 		case "ENTRY_CREATE":
 			clientAction.sendFile(file, oos, ois);
@@ -109,7 +71,7 @@ public class FileChangerListener {
 			log.info("ENTRY_MODIFY");
 			break;
 		case "ENTRY_DELETE":
-//			clientAction.deleteFile(fileName, oos);
+			clientAction.deleteFile(file, oos, ois);
 			log.info("ENTRY_DELETE");
 			break;
 		}

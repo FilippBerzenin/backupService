@@ -1,22 +1,80 @@
 package com.berzenin.backup.client;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.file.DirectoryIteratorException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import lombok.extern.java.Log;
 
 @Log
 public class ClientAction {
+	
+	public static boolean getDiferenceBetweenServerAndClient (Set<String> clientFiles, Set<String> serverFiles) {
+		if (!clientFiles.equals(serverFiles)) {
+			return true;
+		}		
+		return false;
+	}
+	
+	public static Set<String> getSetDiferenceBetweenServerAndClient(Set<String> list, Set<String> list2) {
+	    Set<String> changes = list.stream().filter(o1 -> list2.stream().noneMatch(o2 -> o2.equals(o1)))
+	            .collect(Collectors.toSet());
+		System.out.println("--------------Changes files--------------------");
+	    changes.forEach(x -> System.out.println("There are changes: "+x));
+		return changes;
+		
+	}
+	
+	public static boolean copyChangesForServer(Set<String> changes,Path workingDirectoryPath, ObjectOutputStream oos, ObjectInputStream ois) {
+		changes.stream().forEach(f -> 
+		{
+			try {
+				sendFile((Paths.get(workingDirectoryPath.toString(), f.substring(0, f.indexOf("{")-1))), oos, ois);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		});
+		return false;
+		
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static Set<String> getInformationAboutWorkingDirectoryFromServer (ObjectOutputStream dos, ObjectInputStream ois) {
+		Set<String> listOfFiles = new HashSet<>();;
+		try {
+			listOfFiles = (Set<String>) ois.readObject();
+		} catch (ClassNotFoundException | IOException e) {
+			e.printStackTrace();
+		}
+		System.out.println("--------------Server files--------------------");
+		listOfFiles.forEach((v) -> System.out.println("File server : "+v.toString()));
+		return listOfFiles;
+	}	
+
+	public static Set<String> getInformationAboutWorkDirectoryState(Path workingDirectoryPath) throws IOException {
+		Set<String> files = new HashSet<>();
+		try (DirectoryStream<Path> stream = Files.newDirectoryStream(workingDirectoryPath)) {
+		    for (Path file: stream) {
+		    	files.add(file.getFileName()+ " " +Files.readAttributes(file, "size"));
+		    }
+		} catch (IOException | DirectoryIteratorException x) {
+		    System.err.println(x);
+		}
+		System.out.println("--------------Client files--------------------");
+		files.forEach((v) -> System.out.println("File client : "+v.toString()));
+		return files;
+	}
 
 	public static String getClientName() throws IOException {
 		String hostname = "Unknown";
@@ -31,90 +89,41 @@ public class ClientAction {
 		}
 		return hostname;
 	}
-	
-	public static boolean createDirectoryIfNotExist(Path path) throws IOException  {
+
+	public static boolean createDirectoryIfNotExist(Path path) throws IOException {
 		if (Files.notExists(path)) {
 			log.info("Target file \"" + path + "\" will be created.");
 			Files.createFile(Files.createDirectories(path)).toFile();
 			return true;
 		}
-		return false;		
+		return false;
 	}
-	
-	public static void sendFile(Path file, DataOutputStream dos, DataInputStream ois) throws IOException {
-//	    File myFile = new File(file);
+
+	public static void sendFile(Path file, ObjectOutputStream dos, ObjectInputStream ois) throws IOException {
 		dos.writeUTF("copyOrModify");
 		dos.flush();
-//	    while (true) {
-//	      Socket sock = servsock.accept();
-//	    	System.out.println("File name: "+file);
-//	    	System.out.println("File path: "+file.getFileName());
-//	    	System.out.println(file.toFile().length());
-	    	dos.writeUTF(file.getFileName().toString());
-	    	dos.flush();
-	    	List<String> lines = Files.readAllLines(file);
-	    	int count = lines.size();
-	    	dos.writeInt(count);	    	
-	    	int line = 0;
-	    	while (count>0) {
-	    		dos.writeUTF(lines.get(line));
-	    		dos.flush();
-	    		count--;
-	    		line++;
-	    	}
-//    		dos.writeUTF("break");
-//    		dos.flush();
-//	    	try (
-//	    	    BufferedReader reader =
-//	    	      new BufferedReader(Files.newBufferedReader(file))) {
-//	    	    String line = null;
-//	    	    while ((line = reader.readLine()) != null) {
-//	    	        System.out.println(line);
-//	    	    }
-//	    	} catch (IOException x) {
-//	    	    System.err.println(x);
-//	    	}
-//	    	Files.copy(file, dos);
-//	    	dos.flush();
-	    	log.info("File copy: "+file);
-//	      byte[] mybytearray = new byte[(int) file.toFile().length()];
-//	      BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file.toFile()));
-//	      bis.read(mybytearray, 0, mybytearray.length);
-////	      OutputStream os = sock.getOutputStream();
-//	      dos.write(mybytearray, 0, mybytearray.length);
-//	      dos.flush();
-//	    }
-//	      sock.close();
-//		dos.writeUTF("copyOrModify");
-//		dos.flush();
-//		log.info("Send path: "+dir);
-//		dos.writeUTF(dir);
-//		dos.flush();
-//		log.info("Send file name: "+file);
-//		dos.writeUTF(file);
-//		dos.flush();
-//		Path tempFile = Files.createTempFile(file);
-//		Files.copy(ois, tempFile);
-//		FileInputStream fis = new FileInputStream(file);
-//		byte[] buffer = new byte[4096];
-//		while (fis.read(buffer) > -1) {
-//			dos.write(buffer);
-//		}
-//		log.info("File "+file+" copy for server");
-//		dos.close();
-//		fis.close();
+		dos.writeUTF(file.getFileName().toString());
+		dos.flush();
+		List<String> lines = Files.readAllLines(file);
+		int count = lines.size();
+		dos.writeInt(count);
+		int line = 0;
+		while (count > 0) {
+			dos.writeUTF(lines.get(line));
+			dos.flush();
+			count--;
+			line++;
+		}
+		log.info("File copy: " + file);
 	}
-	
-	public static String deleteFile(String dir, String path, String fileName, DataOutputStream dos) throws IOException {
+
+	public static String deleteFile(Path file, ObjectOutputStream dos, ObjectInputStream ois) throws IOException {
 		dos.writeUTF("delete");
 		dos.flush();
-		log.info("Send path: "+dir);
-		dos.writeUTF(dir);
+		log.info("Send file name: " + file.toString());
+		dos.writeUTF(file.getFileName().toString());
 		dos.flush();
-		log.info("Send file name: "+fileName);
-		dos.writeUTF(fileName);
-		dos.flush();
-		log.info("File delete: " + fileName);
+		log.info("File delete: " + file);
 		return "";
 	}
 }
