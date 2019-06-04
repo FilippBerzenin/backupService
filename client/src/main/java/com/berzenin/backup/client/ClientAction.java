@@ -31,7 +31,18 @@ public class ClientAction {
 	    Set<String> changes = list.stream().filter(o1 -> list2.stream().noneMatch(o2 -> o2.equals(o1)))
 	            .collect(Collectors.toSet());
 		System.out.println("--------------Changes files--------------------");
-	    changes.forEach(x -> System.out.println("There are changes: "+x));
+		changes.stream().sorted();
+	    changes.forEach(x -> System.out.println("There are changes from client: "+x));
+		return changes;
+		
+	}
+	
+	public static Set<String> getSetDiferenceBetweenClietnAndServer(Set<String> list, Set<String> list2) {
+	    Set<String> changes = list.stream().filter(o1 -> list2.stream().noneMatch(o2 -> o2.equals(o1)))
+	            .collect(Collectors.toSet());
+		System.out.println("--------------Changes files--------------------");
+		changes.stream().sorted();
+	    changes.forEach(x -> System.out.println("There are changes from server: "+x));
 		return changes;
 		
 	}
@@ -45,8 +56,18 @@ public class ClientAction {
 				e.printStackTrace();
 			}
 		});
-		return false;
-		
+		return false;		
+	}
+	
+	public static void deleteFilesFromServer(Set<String> changes,Path workingDirectory, ObjectOutputStream oos, ObjectInputStream ois) {
+		changes.stream().forEach(f -> 
+		{
+			try {
+				deleteFile((Paths.get(workingDirectory.toString(), f.substring(0, f.indexOf("{")-1))), oos, ois);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		});
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -58,7 +79,7 @@ public class ClientAction {
 			e.printStackTrace();
 		}
 		System.out.println("--------------Server files--------------------");
-		listOfFiles.forEach((v) -> System.out.println("File server : "+v.toString()));
+		listOfFiles.stream().sorted().forEach((v) -> System.out.println("File server : "+v.toString()));
 		return listOfFiles;
 	}	
 
@@ -72,7 +93,7 @@ public class ClientAction {
 		    System.err.println(x);
 		}
 		System.out.println("--------------Client files--------------------");
-		files.forEach((v) -> System.out.println("File client : "+v.toString()));
+		files.stream().sorted().forEach((v) -> System.out.println("File client : "+v.toString()));
 		return files;
 	}
 

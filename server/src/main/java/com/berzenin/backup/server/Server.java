@@ -26,7 +26,7 @@ public class Server {
 		}
 	}
 
-	private static class Handler implements Runnable {
+	private static class Handler extends Thread {
 		private Socket socket;
 		private ObjectOutputStream oos;
 		private ObjectInputStream ois;
@@ -34,10 +34,13 @@ public class Server {
 		private String clientMachine;
 		private String command;
 		private Path rootPath;
+		
 
 		public Handler(Socket socket, Path rootPath) {
+			setDaemon(true);
 			this.socket = socket;
 			this.rootPath = rootPath;
+			
 		}
 
 		public void run() {

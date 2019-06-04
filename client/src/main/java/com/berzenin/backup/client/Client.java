@@ -5,13 +5,14 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ConnectException;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.util.Set;
 
 import lombok.extern.java.Log;
 
 @Log
-public class Client {
+public class Client implements Runnable {
 
 	private String serverAddress;
 	private Path workingDirectoryPath;
@@ -25,7 +26,7 @@ public class Client {
 		this.port = port;
 	}
 
-	public void run() throws IOException, InterruptedException {
+	public void run() {
 		try (Socket socket = new Socket(serverAddress, port)) {
 			oos = new ObjectOutputStream(socket.getOutputStream());
 			ois = new ObjectInputStream(socket.getInputStream());
@@ -34,11 +35,20 @@ public class Client {
 
 			while (true) {
 				fileChangerListener.requestForCheckChangesFromDirectory();
-				Thread.sleep(50);
+				try {
+					Thread.sleep(50);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 			}
 		} catch (ConnectException e) {
 			log.warning("Something with the connection, the server may not be turned on");
 			System.exit(0);
+		} catch (UnknownHostException e1) {
+			e1.printStackTrace();
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
 		}
 	}
 
@@ -67,6 +77,10 @@ public class Client {
 				if (ClientAction.getDiferenceBetweenServerAndClient(clientFiles, serverFiles)) {
 					Set<String> changes = ClientAction.getSetDiferenceBetweenServerAndClient(clientFiles, serverFiles);
 					ClientAction.copyChangesForServer(changes, workingDirectoryPath, oos, ois);
+					ClientAction.getSetDiferenceBetweenClietnAndServer(serverFiles, clientFiles);
+					ClientAction.deleteFilesFromServer(
+							ClientAction.getSetDiferenceBetweenClietnAndServer(
+									serverFiles, clientFiles), workingDirectoryPath, oos, ois);
 				}
 			}
 		} catch (IOException e) {
