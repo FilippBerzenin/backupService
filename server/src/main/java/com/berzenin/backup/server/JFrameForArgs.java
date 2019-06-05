@@ -53,8 +53,9 @@ public class JFrameForArgs {
 					workingDirectoryPath = Paths.get(workingDirectory.getText());
 					portForServer = Integer.parseInt(port.getText());
 					log.info(workingDirectoryPath + " " + portForServer);
-					new App(workingDirectoryPath, portForServer);
 					label1.setText("Args has been submitted.");
+					f.dispose();
+					new App(workingDirectoryPath, portForServer);
 				} catch (NumberFormatException e) {
 					label1.setText("Args have error values.");
 				}
@@ -64,12 +65,12 @@ public class JFrameForArgs {
 			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				workingDirectory.setText(drectoryChosen());				
+				workingDirectory.setText(directoryChosen());				
 			}
 		});
 	}
 	
-	private String drectoryChosen() {
+	private String directoryChosen() {
 	    JFileChooser chooser = new JFileChooser();
 	    try {
 	    chooser.setCurrentDirectory(new File("."));

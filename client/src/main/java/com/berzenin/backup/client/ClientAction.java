@@ -60,14 +60,8 @@ public class ClientAction {
 	}
 	
 	public static void deleteFilesFromServer(Set<String> changes,Path workingDirectory, ObjectOutputStream oos, ObjectInputStream ois) {
-		changes.stream().forEach(f -> 
-		{
-			try {
-				deleteFile((Paths.get(workingDirectory.toString(), f.substring(0, f.indexOf("{")-1))), oos, ois);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		});
+		changes.stream().forEach(f -> deleteFile((Paths.get(workingDirectory.toString(), f.substring(0, f.indexOf("{")-1))), oos, ois)
+		);
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -111,13 +105,19 @@ public class ClientAction {
 		return hostname;
 	}
 
-	public static boolean createDirectoryIfNotExist(Path path) throws IOException {
+	public static boolean createDirectoryIfNotExist(Path path) {
 		if (Files.notExists(path)) {
-			log.info("Target file \"" + path + "\" will be created.");
-			Files.createFile(Files.createDirectories(path)).toFile();
-			return true;
+			log.info("Target path \"" + path + "\" will be created.");
+			try {
+				Files.createDirectories(path);
+				log.info("Target path \"" + path + "\" will be created.");
+			} catch (IOException e) {
+				e.printStackTrace();
+				log.info(e.getMessage());
+			}
+			return false;
 		}
-		return false;
+		return true;
 	}
 
 	public static void sendFile(Path file, ObjectOutputStream dos, ObjectInputStream ois) throws IOException {
@@ -138,13 +138,16 @@ public class ClientAction {
 		log.info("File copy: " + file);
 	}
 
-	public static String deleteFile(Path file, ObjectOutputStream dos, ObjectInputStream ois) throws IOException {
-		dos.writeUTF("delete");
-		dos.flush();
-		log.info("Send file name: " + file.toString());
-		dos.writeUTF(file.getFileName().toString());
-		dos.flush();
+	public static void deleteFile(Path file, ObjectOutputStream dos, ObjectInputStream ois) {
+		try {
+			dos.writeUTF("delete");
+			dos.flush();
+			log.info("Send file name: " + file.toString());
+			dos.writeUTF(file.getFileName().toString());
+			dos.flush();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		log.info("File delete: " + file);
-		return "";
 	}
 }

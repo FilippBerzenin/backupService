@@ -18,7 +18,7 @@ public class Server {
 
 	Server(int port, Path rootPath) throws IOException {
 		System.out.println("The backup server is running...");
-		ExecutorService pool = Executors.newFixedThreadPool(500);
+		ExecutorService pool = Executors.newFixedThreadPool(50);
 		try (ServerSocket listener = new ServerSocket(port)) {
 			while (true) {
 				pool.execute(new Handler(listener.accept(), rootPath));
@@ -54,6 +54,7 @@ public class Server {
 		}
 
 		private void swopFirstInformationWithClient() {
+			command = "no command";
 			try {
 				String hello = ois.readUTF();
 				log.info("Client send - " + hello);

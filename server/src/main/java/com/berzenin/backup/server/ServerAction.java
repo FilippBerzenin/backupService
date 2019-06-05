@@ -1,14 +1,22 @@
 package com.berzenin.backup.server;
 
+import static java.nio.file.StandardOpenOption.*;
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.nio.ByteBuffer;
+import java.nio.channels.SeekableByteChannel;
 import java.nio.file.DirectoryIteratorException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
+import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -17,11 +25,16 @@ import lombok.extern.java.Log;
 @Log
 public class ServerAction {
 
-	public static Path setWorkingDirectory(Path path, String clientMachineName, Path rootPath) throws IOException {
+	public static Path setWorkingDirectory(Path path, String clientMachineName, Path rootPath) {
 		Path root = path.getRoot();
 		Path fullPath = Paths.get(rootPath.toString(), clientMachineName, root.relativize(path).toString());
 		if (Files.notExists(fullPath)) {
-			Files.createDirectories(fullPath);
+			try {
+				Files.createDirectories(fullPath);
+			} catch (IOException e) {
+				e.printStackTrace();
+				log.warning(e.toString());
+			}
 			log.info("Target directory \"" + fullPath + "\" will be created.");
 		}
 		return fullPath;
@@ -46,17 +59,23 @@ public class ServerAction {
 		fos.close();
 		log.info("File name for copy: " + workingDirectoryPath.toString());
 	}
-	
-	public static void deleteFilesForDirectory(Path workingDirectoryPath, ObjectInputStream in, ObjectOutputStream oos)
-			throws IOException {
-		String fileName = in.readUTF();
-		Path path = Paths.get(workingDirectoryPath.toString(), fileName);
-		log.info("Path: " + path.toString());
-		Files.delete(path);
+
+	public static void deleteFilesForDirectory(Path workingDirectoryPath, ObjectInputStream in,
+			ObjectOutputStream oos) {
+		String fileName;
+		try {
+			fileName = in.readUTF();
+			Path path = Paths.get(workingDirectoryPath.toString(), fileName);
+			log.info("Path: " + path.toString());
+			Files.delete(path);
+		} catch (IOException e) {
+			e.printStackTrace();
+			log.warning(e.toString());
+		}
 		log.info("File name for delete: " + workingDirectoryPath.toString());
 	}
-	
-	public static Set<String> getInformationAboutWorkDirectoryState(Path workingDirectoryPath) throws IOException {
+
+	public static Set<String> getInformationAboutWorkDirectoryState(Path workingDirectoryPath) {
 		Set<String> files = new HashSet<>();
 		try (DirectoryStream<Path> stream = Files.newDirectoryStream(workingDirectoryPath)) {
 		    for (Path file: stream) {
@@ -69,8 +88,13 @@ public class ServerAction {
 		return files;
 	}
 	
-	public static void sendInformationAboutWorkDirectoryStateForClient (Set<String> files, ObjectInputStream in, ObjectOutputStream oos) throws IOException {
-		oos.writeObject(files);
-		oos.flush();
+	public static void sendInformationAboutWorkDirectoryStateForClient (Set<String> files, ObjectInputStream in, ObjectOutputStream oos) {
+		try {
+			oos.writeObject(files);
+			oos.flush();
+		} catch (IOException e) {
+			e.printStackTrace();
+			log.warning(e.toString());
+		}
 	}
 }

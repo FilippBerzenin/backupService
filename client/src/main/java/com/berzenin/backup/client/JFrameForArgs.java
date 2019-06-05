@@ -58,6 +58,7 @@ public class JFrameForArgs {
 					serverIp = ipServer.getText();
 					portForServer = Integer.parseInt(port.getText());
 					log.info(workingDirectoryPath + " " + serverIp + " " + portForServer);
+					f.dispose();
 					new App(serverIp, workingDirectoryPath, portForServer);
 					label1.setText("Args has been submitted.");
 				} catch (NumberFormatException e) {
